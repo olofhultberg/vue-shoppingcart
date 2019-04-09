@@ -10,7 +10,8 @@ export default new Vuex.Store({
     // = data
     products: [],
     // {id, quantity}
-    cart: []
+    cart: [],
+    checkoutStatus: null
   },
 
   getters: {
@@ -27,9 +28,17 @@ export default new Vuex.Store({
         return {
           title: product.title,
           price: product.price,
-          quantity: product.quantity
+          quantity: cartItem.quantity
         }
       })
+    },
+
+    cartTotal (state, getters) {
+      let total = 0
+      return getters.cartProducts.reduce(
+        (total, product) => total + product.price * product.quantity,
+        0
+      )
     }
   },
 
@@ -44,6 +53,19 @@ export default new Vuex.Store({
           resolve()
         })
       })
+    },
+
+    checkout ({ state, commit }) {
+      shop.buyProducts(
+        state.cart,
+        () => {
+          commit('emptyCart')
+          commit('setCheckoutStatus', 'Success')
+        },
+        () => {
+          commit('setCheckoutStatus', 'Fail')
+        }
+      )
     },
 
     addProductToCart (context, product) {
@@ -80,12 +102,19 @@ export default new Vuex.Store({
     },
 
     incrementItemQuantity (state, cartItem) {
-      const qty = cartItem.quantity
-      cartItem.quantity = qty + 1
+      cartItem.quantity++
     },
 
     decrementProductInventory (state, product) {
       product.inventory--
+    },
+
+    setCheckoutStatus (state, status) {
+      state.checkoutStatus = status
+    },
+
+    emptyCart () {
+      state.cart = []
     }
   }
 })
